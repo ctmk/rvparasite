@@ -6,11 +6,21 @@ namespace {
 	const TCHAR TARGET_WINDOW[] = TEXT("RPGツクールVX Ace");
 
 	namespace HookScript {
-		const TCHAR PreSave[] = TEXT("hooks\\pre-save.bat");
-		const TCHAR PostSave[] = TEXT("hooks\\post-save.bat");
-		const TCHAR PreTestPlay[] = TEXT("hooks\\pre-testplay.bat");
-//		const TCHAR PostTestPlay[] = TEXT("hooks\\post-testplay.bat");
-	}
+		enum TYPE {
+			PRE_SAVE,
+			POST_SAVE,
+			PRE_TESTPLAY,
+			POST_TESTPLAY,
+
+			NUM,
+		};
+		const TCHAR * const Files[] = {
+			TEXT("hooks\\pre-save.bat"),
+			TEXT("hooks\\post-save.bat"),
+			TEXT("hooks\\pre-testplay.bat"),
+			TEXT("hooks\\post-testplay.bat"),
+		};
+	};
 
 	namespace CommandID {
 		enum TYPE {
@@ -23,13 +33,17 @@ namespace {
 namespace rvp {
 
 	MessageHook::MessageHook()
-		: m_handleHook(NULL)
+		: m_Process()
+		, m_handleHook(NULL)
 		, m_handleMainWindow(NULL)
 		, m_WndProc(NULL)
 		, m_typePostProcNeeded(Hook::NONE)
 		, m_typeSelected(Hook::NONE)
 		, m_functionWindowHook()
 	{
+		for (int i = 0; i < HookScript::NUM; ++i) {
+			m_Process.add(i, HookScript::Files[i]);
+		}
 	}
 
 	MessageHook::~MessageHook()
@@ -69,10 +83,12 @@ namespace rvp {
 		try {
 			switch (typeToProc) {
 			case Hook::SAVE:
-				rvp::process::boot(HookScript::PostSave);
+				m_Process.requestToBoot(HookScript::POST_SAVE);
+				// rvp::process::boot(HookScript::PostSave);
 				break;
 			case Hook::TEST_PLAY:
-//				rvp::process::boot(HookScript::PostTestPlay);
+//				m_Process.requestToBoot(HookScript::POST_TESTPLAY);
+				// rvp::process::boot(HookScript::PostTestPlay);
 				break;
 			}
 		} catch (std::runtime_error &e) {
@@ -227,11 +243,13 @@ namespace rvp {
 			switch (typeToProc) {
 			case Hook::SAVE:
 				DEBUG_PRINT("-------------run save\n");
-				rvp::process::boot(HookScript::PreSave);
+				m_Process.requestToBoot(HookScript::PRE_SAVE);
+				// rvp::process::boot(HookScript::PreSave);
 				break;
 			case Hook::TEST_PLAY:
 				DEBUG_PRINT("-------------run testplay\n");
-				rvp::process::boot(HookScript::PreTestPlay);
+				m_Process.requestToBoot(HookScript::PRE_TESTPLAY);
+				// rvp::process::boot(HookScript::PreTestPlay);
 				break;
 			}
 		} catch (std::runtime_error &e) {

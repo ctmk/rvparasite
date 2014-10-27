@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include <functional>
+#include "rvp_process.h"
 
 namespace rvp {
 
@@ -65,6 +66,7 @@ namespace rvp {
 		void on_created_main_window(HWND hWnd);
 		void run_hook_script();
 
+		process::Parallel m_Process;
 		HHOOK m_handleHook;
 		HWND m_handleMainWindow;
 		WNDPROC m_WndProc;
