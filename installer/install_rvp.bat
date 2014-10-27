@@ -30,28 +30,28 @@ goto abort
 @if exist %RVP_DLL% goto chech_rpg
 @echo !Error: rvp が見つかりません。
 @echo  %RVP_DLL% が存在しません。
-goto abort
+goto failed
 
 :chech_rpg
 @echo.
 @echo ...RPGツクールVX Aceをインストールしたフォルダを探します。
-@reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Enterbrain\RPGVXAce" /v ApplicationPath >NUL 2>&1
+@reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Enterbrain\RPGVXAce" /v ApplicationPath /reg:32 >NUL 2>&1
 @if "%ERRORLEVEL%"=="0" goto get_rpg
 @echo !Error: RPGツクールVX Aceが見つかりません。
-goto abort
+goto failed
 
 
 :get_rpg
-@for /f "TOKENS=1,2,*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Enterbrain\RPGVXAce" /v ApplicationPath') do (
+@for /f "TOKENS=1,2,*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Enterbrain\RPGVXAce" /v ApplicationPath /reg:32') do (
 	@if "%%A"=="ApplicationPath" set PATH_RPG=%%C
 )
 @if exist "%PATH_RPG%" (
-	@echo  RPGツクールVX Ace: %PATH_RPG%
+	@echo RPGツクールVX Ace: "%PATH_RPG%"
 	goto check_dll
 )
 @echo !Error: RPGツクールVX Aceが見つかりません。
 @echo  - レジストリに設定されているパス "%PATH_RPG%" は存在しません。
-goto abort
+goto failed
 
 
 :check_dll
@@ -72,14 +72,23 @@ goto abort
 
 :move_dll
 @mkdir "%PATH_RPG%\SciLexer"
+@if not "%ERRORLEVEL%"=="0" goto required_admin_authorship
 @move "%PATH_RPG%\SciLexer.dll" "%PATH_RPG%\SciLexer"
-
+@if not "%ERRORLEVEL%"=="0" goto required_admin_authorship
 
 :register_dll_path
 @reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\RPGVxAce.exe" /v Path /t REG_SZ /d "%PATH_RPG%\SciLexer"
-
+@if not "%ERRORLEVEL%"=="0" goto required_admin_authorship
 
 goto exit
+
+
+:required_admin_authorship
+@echo.
+@echo rvp をインストールするために管理者権限が必要な可能性があります。
+@echo インストール用のバッチファイルを「管理者として実行」してください。
+goto failed
+
 
 :abort
 @echo.
@@ -89,6 +98,13 @@ goto exit
 @cd %HOME%
 @exit /B 1
 
+:failed
+@echo.
+@echo rvp のインストールに失敗しました。
+@pause
+
+@cd %HOME%
+@exit /B 2
 
 :exit
 @echo rvp のインストールが完了しました。
